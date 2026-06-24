@@ -1,6 +1,6 @@
 export class AppError extends Error {
   constructor(
-    public readonly message: string,
+    public override readonly message: string,
     public readonly statusCode: number,
     public readonly code?: string
   ) {
@@ -8,4 +8,4 @@ export class AppError extends Error {
     this.name = this.constructor.name;
     Error.captureStackTrace(this, this.constructor);
   }
-}
+}   
