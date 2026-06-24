@@ -1,0 +1,1280 @@
+openapi: 3.0.3
+info:
+  title: Let Shop API
+  description: REST API untuk aplikasi e-commerce Let Shop
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+
+tags:
+  - name: Auth
+  - name: Products
+  - name: Categories
+  - name: Cart
+  - name: Orders
+  - name: Dashboard (Admin)
+
+# ─────────────────────────────────────────
+# SECURITY SCHEMES
+# ─────────────────────────────────────────
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # ─────────────────────────────────────────
+  # REUSABLE SCHEMAS
+  # ─────────────────────────────────────────
+  schemas:
+
+    # ── Generic ──
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Berhasil"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Terjadi kesalahan"
+
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 100
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        totalPages:
+          type: integer
+          example: 10
+
+    # ── Auth ──
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          example: "Habib Santoso"
+        email:
+          type: string
+          format: email
+          example: "habib@example.com"
+        password:
+          type: string
+          minLength: 6
+          example: "secret123"
+        phone:
+          type: string
+          example: "081234567890"
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "habib@example.com"
+        password:
+          type: string
+          example: "secret123"
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Login berhasil"
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            user:
+              $ref: '#/components/schemas/UserProfile'
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [ADMIN, CUSTOMER]
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Category ──
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Pakaian"
+        slug:
+          type: string
+          example: "pakaian"
+        createdAt:
+          type: string
+          format: date-time
+
+    CategoryRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: "Pakaian"
+
+    # ── Product ──
+    ProductVariant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Merah - L"
+        price:
+          type: number
+          format: float
+          example: 150000
+        stock:
+          type: integer
+          example: 20
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Kaos Polos"
+        description:
+          type: string
+          example: "Kaos polos berbahan cotton combed 30s"
+        price:
+          type: number
+          format: float
+          example: 120000
+        stock:
+          type: integer
+          example: 50
+        imageUrl:
+          type: string
+          example: "http://192.168.1.x:3000/uploads/kaos-polos.jpg"
+        category:
+          $ref: '#/components/schemas/Category'
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariant'
+        createdAt:
+          type: string
+          format: date-time
+
+    ProductListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        stock:
+          type: integer
+        imageUrl:
+          type: string
+          nullable: true
+        category:
+          $ref: '#/components/schemas/Category'
+
+    # ── Cart ──
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          example: 2
+        variant:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+              example: "Merah - L"
+            price:
+              type: number
+              format: float
+              example: 150000
+            stock:
+              type: integer
+              example: 20
+            product:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                  example: "Kaos Polos"
+                imageUrl:
+                  type: string
+                  nullable: true
+
+    CartResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/CartItem'
+            totalPrice:
+              type: number
+              format: float
+              example: 300000
+
+    AddToCartRequest:
+      type: object
+      required: [variantId, quantity]
+      properties:
+        variantId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+
+    UpdateCartItemRequest:
+      type: object
+      required: [quantity]
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          example: 3
+
+    # ── Order ──
+    OrderStatus:
+      type: string
+      enum: [PENDING, DIPROSES, SELESAI]
+
+    PaymentMethod:
+      type: string
+      enum: [COD, DUMMY]
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+        price:
+          type: number
+          format: float
+        variant:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            product:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                imageUrl:
+                  type: string
+                  nullable: true
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+        totalPrice:
+          type: number
+          format: float
+          example: 300000
+        shippingAddress:
+          type: string
+          example: "Jl. Sudirman No. 10, Medan, Sumatera Utara"
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CheckoutRequest:
+      type: object
+      required: [shippingAddress, paymentMethod]
+      properties:
+        shippingAddress:
+          type: string
+          example: "Jl. Sudirman No. 10, Medan, Sumatera Utara"
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+
+    UpdateOrderStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+
+    # ── Dashboard ──
+    DashboardStats:
+      type: object
+      properties:
+        totalOrders:
+          type: integer
+          example: 120
+        totalRevenue:
+          type: number
+          format: float
+          example: 18000000
+        totalProducts:
+          type: integer
+          example: 45
+        totalCustomers:
+          type: integer
+          example: 80
+        ordersByStatus:
+          type: object
+          properties:
+            PENDING:
+              type: integer
+              example: 20
+            DIPROSES:
+              type: integer
+              example: 35
+            SELESAI:
+              type: integer
+              example: 65
+        revenueChart:
+          type: array
+          description: Data grafik revenue 7 hari terakhir
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                example: "2025-06-18"
+              revenue:
+                type: number
+                format: float
+                example: 1500000
+              orderCount:
+                type: integer
+                example: 10
+
+  # ─────────────────────────────────────────
+  # REUSABLE RESPONSES
+  # ─────────────────────────────────────────
+  responses:
+    Unauthorized:
+      description: Token tidak valid atau tidak ditemukan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Unauthorized"
+
+    Forbidden:
+      description: Tidak memiliki akses (bukan admin)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Forbidden"
+
+    NotFound:
+      description: Data tidak ditemukan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Data tidak ditemukan"
+
+    ValidationError:
+      description: Input tidak valid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Email sudah digunakan"
+
+# ─────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────
+paths:
+
+  # ══════════════════════════
+  # AUTH
+  # ══════════════════════════
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register user baru
+      description: Role default adalah CUSTOMER. Admin dibuat manual via seed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Register berhasil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                success: true
+                message: "Register berhasil"
+                data:
+                  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    id: "uuid"
+                    name: "Habib Santoso"
+                    email: "habib@example.com"
+                    phone: "081234567890"
+                    role: "CUSTOMER"
+                    createdAt: "2025-06-18T10:00:00.000Z"
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user / admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Email atau password salah
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Email atau password salah"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Ambil profil user yang sedang login
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profil user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ══════════════════════════
+  # CATEGORIES
+  # ══════════════════════════
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Ambil semua kategori
+      responses:
+        '200':
+          description: List kategori
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+
+    post:
+      tags: [Categories]
+      summary: Tambah kategori baru (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '201':
+          description: Kategori berhasil ditambahkan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Kategori berhasil ditambahkan"
+                  data:
+                    $ref: '#/components/schemas/Category'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /categories/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    put:
+      tags: [Categories]
+      summary: Edit kategori (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '200':
+          description: Kategori berhasil diupdate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Category'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Categories]
+      summary: Hapus kategori (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Kategori berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ══════════════════════════
+  # PRODUCTS
+  # ══════════════════════════
+  /products:
+    get:
+      tags: [Products]
+      summary: Ambil list produk (public)
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Cari berdasarkan nama produk
+          example: "kaos"
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter berdasarkan kategori
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List produk berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductListItem'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags: [Products]
+      summary: Tambah produk baru (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [name, price, stock, categoryId]
+              properties:
+                name:
+                  type: string
+                  example: "Kaos Polos"
+                description:
+                  type: string
+                  example: "Kaos polos cotton combed 30s"
+                price:
+                  type: number
+                  example: 120000
+                stock:
+                  type: integer
+                  example: 50
+                categoryId:
+                  type: string
+                  format: uuid
+                image:
+                  type: string
+                  format: binary
+                  description: File gambar produk (jpg/png, max 2MB)
+                variants:
+                  type: string
+                  description: JSON string array of variants
+                  example: '[{"name":"Merah - L","price":150000,"stock":20}]'
+      responses:
+        '201':
+          description: Produk berhasil ditambahkan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Produk berhasil ditambahkan"
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /products/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Products]
+      summary: Detail produk beserta varian (public)
+      responses:
+        '200':
+          description: Detail produk
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Products]
+      summary: Edit produk (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                stock:
+                  type: integer
+                categoryId:
+                  type: string
+                  format: uuid
+                image:
+                  type: string
+                  format: binary
+                variants:
+                  type: string
+                  description: JSON string array of variants (replace all)
+                  example: '[{"name":"Biru - M","price":160000,"stock":15}]'
+      responses:
+        '200':
+          description: Produk berhasil diupdate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Products]
+      summary: Hapus produk (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Produk berhasil dihapus
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ══════════════════════════
+  # CART
+  # ══════════════════════════
+  /cart:
+    get:
+      tags: [Cart]
+      summary: Ambil isi keranjang user yang login
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Isi keranjang
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Cart]
+      summary: Tambah item ke keranjang
+      description: Jika variantId sudah ada di cart, quantity akan ditambahkan.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToCartRequest'
+      responses:
+        '200':
+          description: Item berhasil ditambahkan ke keranjang
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Item berhasil ditambahkan ke keranjang"
+                  data:
+                    $ref: '#/components/schemas/CartItem'
+        '400':
+          description: Stok tidak mencukupi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Stok tidak mencukupi"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /cart/{itemId}:
+    parameters:
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    put:
+      tags: [Cart]
+      summary: Update quantity item di keranjang
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCartItemRequest'
+      responses:
+        '200':
+          description: Quantity berhasil diupdate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/CartItem'
+        '400':
+          description: Stok tidak mencukupi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Cart]
+      summary: Hapus item dari keranjang
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Item berhasil dihapus dari keranjang
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ══════════════════════════
+  # ORDERS
+  # ══════════════════════════
+  /orders:
+    get:
+      tags: [Orders]
+      summary: List pesanan milik user yang login
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+          description: Filter berdasarkan status
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List pesanan user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Orders]
+      summary: Checkout — buat pesanan dari isi keranjang
+      description: |
+        Membuat order dari semua item di keranjang user.
+        Stok akan dikurangi otomatis. Keranjang akan dikosongkan setelah checkout berhasil.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutRequest'
+      responses:
+        '201':
+          description: Pesanan berhasil dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Pesanan berhasil dibuat"
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '400':
+          description: Keranjang kosong atau stok tidak mencukupi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Keranjang kosong"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /orders/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Orders]
+      summary: Detail pesanan milik user yang login
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Detail pesanan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Pesanan bukan milik user ini
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ══════════════════════════
+  # ADMIN — ORDERS
+  # ══════════════════════════
+  /admin/orders:
+    get:
+      tags: [Orders]
+      summary: List semua pesanan (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Semua pesanan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/orders/{id}/status:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    patch:
+      tags: [Orders]
+      summary: Update status pesanan (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderStatusRequest'
+      responses:
+        '200':
+          description: Status berhasil diupdate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Status pesanan berhasil diupdate"
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '400':
+          description: Transisi status tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Status tidak dapat diubah dari SELESAI"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ══════════════════════════
+  # DASHBOARD (ADMIN)
+  # ══════════════════════════
+  /admin/dashboard:
+    get:
+      tags: [Dashboard (Admin)]
+      summary: Statistik dan grafik untuk dashboard admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: range
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d]
+            default: 7d
+          description: Rentang waktu untuk grafik revenue
+      responses:
+        '200':
+          description: Data dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DashboardStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
