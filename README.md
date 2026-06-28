@@ -6,21 +6,15 @@ Aplikasi e-commerce full-stack untuk tugas kuliah, terdiri dari Backend API, Web
 
 ## 👤 Author
 
-| Nama               | NIM               | Role                |
-| ------------------ | ----------------- | ------------------- |
-| Muhammad Habib     | 2315000029        | Product Manager     |
-| Ahmad Fauzi        | 2315000030        | Mobile Developer    |
-| Muhammad Yusuf     | 2315000025        | System Analyst      |
-| M. Faiz Setiawan   | 2315000010        | UI/UX               |
-| Alfa Zebua         | 2315000003        | UI/UX               |
-| Tarisah Febriyanti | 2315000018        | QA/QC Engineer      |
-| Acong Marlindo     | 2315000001        | Member              |
-
-
-
-
-
-
+| Nama               | NIM        | Role              |
+| ------------------ | ---------- | ----------------- |
+| Muhammad Habib     | 2315000029 | Product Manager   |
+| Ahmad Fauzi        | 2315000030 | Mobile Developer  |
+| Muhammad Yusuf     | 2315000025 | System Analyst    |
+| M. Faiz Setiawan   | 2315000010 | UI/UX             |
+| Alfa Zebua         | 2315000003 | UI/UX             |
+| Tarisah Febriyanti | 2315000018 | QA/QC Engineer    |
+| Acong Marlindo     | 2315000001 | Member            |
 
 ---
 
@@ -29,8 +23,8 @@ Aplikasi e-commerce full-stack untuk tugas kuliah, terdiri dari Backend API, Web
 ```
 e-commerce-petshop/
 ├── backend/        # Bun + Express + Prisma + PostgreSQL
-├── web-admin/      # SvelteKit + Tailwind CSS (Neobrutalism)
-└── android/        # Kotlin + Jetpack Compose
+├── frontend/       # SvelteKit + Tailwind CSS
+└── android/        # Flutter
 ```
 
 ---
@@ -61,14 +55,14 @@ e-commerce-petshop/
 
 ### Android
 
-| Komponen     | Teknologi             |
-| ------------ | --------------------- |
-| Language     | Kotlin                |
-| UI           | Jetpack Compose       |
-| Architecture | MVVM                  |
-| HTTP         | Retrofit + OkHttp     |
-| Image        | Coil                  |
-| Storage      | DataStore Preferences |
+| Komponen     | Teknologi              |
+| ------------ | ---------------------- |
+| Language     | Dart                   |
+| UI           | Flutter                |
+| Architecture | MVVM                   |
+| HTTP         | Dio                    |
+| Image        | cached_network_image   |
+| Storage      | shared_preferences     |
 
 ---
 
@@ -123,14 +117,14 @@ Semua endpoint menggunakan format konsisten:
 - [Bun](https://bun.sh) v1.3.14+
 - [Docker](https://docker.com) & Docker Compose
 - [Node.js](https://nodejs.org) v18+ (untuk web admin)
-- Android Studio (untuk Android)
+- [Flutter](https://flutter.dev) v3.0+ & Android Studio (untuk Android)
 
 ---
 
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/<!-- username kamu -->/e-commerce-petshop.git
+git clone https://github.com/Mhabib34/e-commerce-petshop.git
 cd e-commerce-petshop
 ```
 
@@ -170,10 +164,10 @@ bun prisma db seed
 
 #### Akun default dari seed
 
-| Role     | Email                | Password                     |
-| -------- | -------------------- | ---------------------------- |
-| Admin    | admin@letshop.com    | <!-- sesuaikan seed kamu --> |
-| Customer | customer@letshop.com | <!-- sesuaikan seed kamu --> |
+| Role     | Email                | Password     |
+| -------- | -------------------- | ------------ |
+| Admin    | admin@letshop.com    | admin123     |
+| Customer | customer@letshop.com | customer123  |
 
 Backend berjalan di: `http://localhost:3000`
 
@@ -182,7 +176,7 @@ Backend berjalan di: `http://localhost:3000`
 ### 3. Web Admin
 
 ```bash
-cd web-admin
+cd frontend
 npm install
 npm run dev
 ```
@@ -195,14 +189,35 @@ Login menggunakan akun **ADMIN** dari seed.
 
 ### 4. Android
 
-1. Buka folder `android/` di Android Studio
-2. Edit file `app/src/main/java/com/letshop/app/data/remote/RetrofitClient.kt`:
-   ```kotlin
-   const val BASE_URL = "http://192.168.x.x:3000/api/"
-   // Ganti dengan IP lokal laptop kamu (cek via: ip addr / ipconfig)
-   ```
-3. Pastikan HP dan laptop terhubung ke WiFi yang sama
-4. Run aplikasi ke device / emulator
+#### Prerequisites
+
+- Flutter SDK v3.0+
+- Android Studio / VS Code dengan Flutter extension
+- Android device / emulator
+
+#### Setup & Jalankan
+
+```bash
+cd android
+flutter pub get
+```
+
+Edit file konfigurasi base URL di project (sesuaikan path-nya):
+
+```dart
+// Contoh: lib/core/constants/api_constants.dart
+const String baseUrl = 'http://192.168.x.x:3000/api/';
+// Ganti dengan IP lokal laptop kamu
+// Cek via: ip addr (Linux/Mac) atau ipconfig (Windows)
+```
+
+Pastikan HP dan laptop terhubung ke **WiFi yang sama**, lalu jalankan:
+
+```bash
+flutter run
+```
+
+> ⚠️ Jika menggunakan emulator, gunakan `http://10.0.2.2:3000/api/` sebagai base URL (alias untuk localhost dari emulator Android).
 
 ---
 
@@ -360,7 +375,7 @@ backend/
 
 - Gambar produk diakses via `http://localhost:3000/uploads/:filename`
 - Android butuh koneksi WiFi yang sama dengan laptop saat demo
-- Edit `network_security_config.xml` jika IP berubah
+- Untuk emulator Android, gunakan IP `10.0.2.2` sebagai pengganti `localhost`
 - Stok otomatis berkurang saat checkout
 - Cart otomatis kosong setelah checkout berhasil
 
@@ -368,4 +383,4 @@ backend/
 
 ## 📄 Lisensi
 
-Dibuat untuk keperluan tugas kuliah. <!-- tambahkan lisensi jika perlu -->
+Dibuat untuk keperluan tugas kuliah.
