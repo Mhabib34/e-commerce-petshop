@@ -5,6 +5,14 @@ import { orderService } from "./order.service.ts";
 const createSchema = z.object({
   shippingAddress: z.string().min(1),
   paymentMethod: z.enum(["COD", "DUMMY"]),
+  cartItemIds: z.array(z.string().uuid()).optional(),
+});
+
+const directCheckoutSchema = z.object({
+  variantId: z.string().uuid(),
+  quantity: z.number().int().positive(),
+  shippingAddress: z.string().min(1),
+  paymentMethod: z.enum(["COD", "DUMMY"]),
 });
 
 const updateStatusSchema = z.object({
@@ -43,7 +51,17 @@ export const orderController = {
     try {
       const body = createSchema.parse(req.body);
       const data = await orderService.checkout(req.user!.userId, body);
-      res.status(201).json({ success: true, data });
+      res.status(201).json({ success: true, message: "Pesanan berhasil dibuat", data });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async directCheckout(req: Request, res: Response, next: NextFunction) {
+    try {
+      const body = directCheckoutSchema.parse(req.body);
+      const data = await orderService.directCheckout(req.user!.userId, body);
+      res.status(201).json({ success: true, message: "Pesanan berhasil dibuat", data });
     } catch (err) {
       next(err);
     }

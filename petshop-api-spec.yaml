@@ -394,6 +394,33 @@ components:
           example: "Jl. Sudirman No. 10, Medan, Sumatera Utara"
         paymentMethod:
           $ref: '#/components/schemas/PaymentMethod'
+        cartItemIds:
+          type: array
+          description: |
+            ID item keranjang yang ingin di-checkout.
+            Jika tidak dikirim atau kosong, SEMUA item di keranjang akan di-checkout (backward compatible).
+          items:
+            type: string
+            format: uuid
+          example: ["uuid-cart-item-1", "uuid-cart-item-2"]
+
+    DirectCheckoutRequest:
+      type: object
+      required: [variantId, quantity, shippingAddress, paymentMethod]
+      properties:
+        variantId:
+          type: string
+          format: uuid
+          description: ID varian produk yang ingin dibeli
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
+        shippingAddress:
+          type: string
+          example: "Jl. Sudirman No. 10, Medan, Sumatera Utara"
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
 
     UpdateOrderStatusRequest:
       type: object
@@ -1068,10 +1095,12 @@ paths:
 
     post:
       tags: [Orders]
-      summary: Checkout — buat pesanan dari isi keranjang
+      summary: Checkout — buat pesanan dari isi keranjang (semua atau sebagian)
       description: |
-        Membuat order dari semua item di keranjang user.
-        Stok akan dikurangi otomatis. Keranjang akan dikosongkan setelah checkout berhasil.
+        Membuat order dari item di keranjang user.
+        - Jika `cartItemIds` tidak dikirim → checkout SEMUA item di keranjang (backward compatible).
+        - Jika `cartItemIds` dikirim → hanya item yang dipilih yang di-checkout, item lain tetap di keranjang.
+        Stok akan dikurangi otomatis. Item yang di-checkout akan dihapus dari keranjang.
       security:
         - bearerAuth: []
       requestBody:
@@ -1107,6 +1136,59 @@ paths:
                 message: "Keranjang kosong"
         '401':
           $ref: '#/components/responses/Unauthorized'
+
+  /orders/direct:
+    post:
+      tags: [Orders]
+      summary: Direct checkout — beli langsung tanpa masuk keranjang
+      description: |
+        Membuat order langsung dari halaman detail produk.
+        Tidak perlu menambahkan ke keranjang terlebih dahulu.
+        Stok akan dikurangi otomatis. Keranjang tidak terpengaruh.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectCheckoutRequest'
+      responses:
+        '201':
+          description: Pesanan berhasil dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Pesanan berhasil dibuat"
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '400':
+          description: Stok tidak mencukupi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Insufficient stock for variant: Merah - L"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Varian produk tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Product variant not found"
 
   /orders/{id}:
     parameters:
