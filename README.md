@@ -8,9 +8,9 @@ Aplikasi e-commerce full-stack untuk tugas kuliah, terdiri dari Backend API, Web
 
 | Nama               | NIM               | Role                |
 | ------------------ | ----------------- | ------------------- |
-| Muhammad Habib     | 2315000029        | Fullstack Developer |
-| Ahmad Fauzi        | 2315000030        | System Analyst      |
-| Muhammad Yusuf     | 2315000025        | Product Manager     |
+| Muhammad Habib     | 2315000029        | Product Manager     |
+| Ahmad Fauzi        | 2315000030        | Mobile Developer    |
+| Muhammad Yusuf     | 2315000025        | System Analyst      |
 | M. Faiz Setiawan   | 2315000010        | UI/UX               |
 | Alfa Zebua         | 2315000003        | UI/UX               |
 | Tarisah Febriyanti | 2315000018        | QA/QC Engineer      |
