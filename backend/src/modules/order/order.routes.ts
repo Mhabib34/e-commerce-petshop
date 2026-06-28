@@ -18,6 +18,13 @@ orderRoutes.post(
   authorize("CUSTOMER"),
   orderController.checkout
 );
+// Direct checkout — beli langsung tanpa masuk keranjang
+orderRoutes.post(
+  "/direct",
+  authenticate,
+  authorize("CUSTOMER"),
+  orderController.directCheckout
+);
 orderRoutes.get(
   "/:id",
   authenticate,

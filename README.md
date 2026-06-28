@@ -272,11 +272,12 @@ Query params untuk GET `/products`:
 
 ### Orders (Customer)
 
-| Method | Endpoint      | Auth     | Deskripsi              |
-| ------ | ------------- | -------- | ---------------------- |
-| GET    | `/orders`     | Customer | List pesanan sendiri   |
-| POST   | `/orders`     | Customer | Checkout dari cart     |
-| GET    | `/orders/:id` | Customer | Detail pesanan sendiri |
+| Method | Endpoint          | Auth     | Deskripsi                                              |
+| ------ | ----------------- | -------- | ------------------------------------------------------ |
+| GET    | `/orders`         | Customer | List pesanan sendiri                                   |
+| POST   | `/orders`         | Customer | Checkout dari cart (semua atau pilih sebagian item)     |
+| POST   | `/orders/direct`  | Customer | Direct checkout dari halaman detail (tanpa keranjang)  |
+| GET    | `/orders/:id`     | Customer | Detail pesanan sendiri                                 |
 
 ### Admin
 
@@ -367,6 +368,8 @@ backend/
 - ✅ Detail produk + pilih varian
 - ✅ Keranjang belanja
 - ✅ Checkout (alamat + metode pembayaran)
+- ✅ Checkout langsung dari detail produk (tanpa keranjang)
+- ✅ Selective checkout — pilih sebagian item dari keranjang
 - ✅ Riwayat & detail pesanan
 
 ---
@@ -377,7 +380,9 @@ backend/
 - Android butuh koneksi WiFi yang sama dengan laptop saat demo
 - Untuk emulator Android, gunakan IP `10.0.2.2` sebagai pengganti `localhost`
 - Stok otomatis berkurang saat checkout
-- Cart otomatis kosong setelah checkout berhasil
+- Cart otomatis kosong setelah checkout berhasil (atau hanya item yang di-checkout jika menggunakan selective checkout)
+- Direct checkout (`POST /orders/direct`) membuat pesanan langsung tanpa menyentuh keranjang
+- Selective checkout (`POST /orders` dengan `cartItemIds`) memungkinkan memilih sebagian item dari keranjang
 
 ---
 

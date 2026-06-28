@@ -1,6 +1,14 @@
 export interface CreateOrderBody {
   shippingAddress: string;
   paymentMethod: "COD" | "DUMMY";
+  cartItemIds?: string[]; // Jika tidak dikirim → checkout SEMUA item di cart
+}
+
+export interface DirectCheckoutBody {
+  variantId: string;
+  quantity: number;
+  shippingAddress: string;
+  paymentMethod: "COD" | "DUMMY";
 }
 
 export interface OrderQuery {
