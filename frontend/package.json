@@ -58,5 +58,9 @@
 	},
 	"keywords": [
 		"svelte"
-	]
+	],
+	"dependencies": {
+		"@tanstack/svelte-query": "^6.1.36",
+		"axios": "^1.18.1"
+	}
 }
