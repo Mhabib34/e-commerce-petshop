@@ -8,14 +8,29 @@
 
     let email = $state("");
     let password = $state("");
+    let errorMsg = $state("");
 
     function submit() {
+        errorMsg = "";
         loginMutation.mutate(
             { email, password },
             {
-                onSuccess: () => {
+                onSuccess: (data) => {
+                    if (data.data?.token) {
+                        localStorage.setItem("token", data.data.token);
+                    }
                     queryClient.invalidateQueries({ queryKey: ["me"] });
-                    goto("/");
+                    // Check role and redirect
+                    if (data.data?.user?.role === "ADMIN") {
+                        goto("/admin");
+                    } else {
+                        goto("/");
+                    }
+                },
+                onError: (error: any) => {
+                    errorMsg =
+                        error?.response?.data?.message ||
+                        "Email atau password salah";
                 },
             }
         );
@@ -24,10 +39,19 @@
 
 <div class="flex justify-center items-center h-screen w-screen px-5">
     <form
-        onsubmit={(e) => { e.preventDefault(); submit(); }}
+        onsubmit={(e) => {
+            e.preventDefault();
+            submit();
+        }}
         class="w-full md:w-[600px] p-8 flex flex-col justify-center gap-6 border-2 rounded-lg shadow-2xl"
     >
-        <h1 class="text-2xl font-bold text-center">Login</h1>
+        <h1 class="text-2xl font-bold text-center">Login Admin</h1>
+
+        {#if errorMsg}
+            <div class="bg-red-100 text-red-700 p-3 rounded-lg text-sm">
+                {errorMsg}
+            </div>
+        {/if}
 
         <div class="flex flex-col gap-2">
             <label for="email" class="font-medium">Email</label>
@@ -51,9 +75,10 @@
 
         <button
             type="submit"
-            class="w-full p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium cursor-pointer"
+            disabled={loginMutation.isPending}
+            class="w-full p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium cursor-pointer disabled:opacity-50"
         >
-            Login
+            {loginMutation.isPending ? "Loading..." : "Login"}
         </button>
     </form>
 </div>

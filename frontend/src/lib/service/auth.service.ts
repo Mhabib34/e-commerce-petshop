@@ -7,6 +7,10 @@ export const login = async (data: LoginUser) => {
 };
 
 export const me = async () => {
+  // Only attempt if token exists
+  if (typeof window !== "undefined" && !localStorage.getItem("token")) {
+    throw new Error("No token");
+  }
   const { data } = await api.get("/auth/me");
   return data;
 };
