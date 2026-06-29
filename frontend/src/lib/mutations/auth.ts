@@ -1,5 +1,11 @@
-import { login } from "$lib/service/auth.service";
+import { login, register } from "$lib/service/auth.service";
 import { createMutation } from "@tanstack/svelte-query";
+
+export const useRegister = () =>
+    createMutation(() => ({
+        mutationFn: register,
+    }));
+
 
 export const useLogin = () =>
     createMutation(() => ({

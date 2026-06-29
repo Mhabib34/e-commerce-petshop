@@ -1,5 +1,11 @@
 import { api } from "$lib/api/client";
-import type { LoginUser } from "$lib/types/user.type";
+import type { LoginUser, RegisterUser } from "$lib/types/user.type";
+
+export const register = async (data: RegisterUser) => {
+  const response = await api.post("/auth/register", data);
+  return response.data;
+};
+
 
 export const login = async (data: LoginUser) => {
   const response = await api.post("/auth/login", data);
