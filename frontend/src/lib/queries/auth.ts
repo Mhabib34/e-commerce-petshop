@@ -5,4 +5,6 @@ export const useMe = () =>
     createQuery(() => ({
         queryKey: ["me"],
         queryFn: me,
+        retry: false,
+        staleTime: 5 * 60 * 1000,
     }));
