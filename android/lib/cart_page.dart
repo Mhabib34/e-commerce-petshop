@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'core/constants/api_constants.dart';
+import 'checkout_page.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -16,7 +17,7 @@ class _CartPageState extends State<CartPage> {
   List<dynamic> _cartItems = [];
   bool _isLoading = true;
   String _errorMessage = '';
-  Set<int> _selectedItemIds = {}; // Menyimpan ID cart item yang dipilih untuk checkout
+  Set<String> _selectedItemIds = {}; // Menyimpan ID cart item yang dipilih untuk checkout
 
   @override
   void initState() {
@@ -46,7 +47,14 @@ class _CartPageState extends State<CartPage> {
 
       if (response.statusCode == 200 && response.data['success'] == true) {
         setState(() {
-          _cartItems = response.data['data'] ?? [];
+          final data = response.data['data'];
+          if (data is List) {
+            _cartItems = data;
+          } else if (data is Map) {
+            _cartItems = data['items'] ?? data['cartItems'] ?? data['products'] ?? [];
+          } else {
+            _cartItems = [];
+          }
           _isLoading = false;
         });
       } else {
@@ -61,9 +69,17 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
-  Future<void> _updateQuantity(int cartItemId, int currentQuantity, int change) async {
+  Future<void> _updateQuantity(String cartItemId, int currentQuantity, int change) async {
     final newQuantity = currentQuantity + change;
     if (newQuantity < 1) return;
+
+    // Optimistic UI Update (langsung ganti angka di layar tanpa loading)
+    setState(() {
+      final index = _cartItems.indexWhere((item) => item['id'] == cartItemId);
+      if (index != -1) {
+        _cartItems[index]['quantity'] = newQuantity;
+      }
+    });
 
     try {
       final token = await _getToken();
@@ -78,12 +94,19 @@ class _CartPageState extends State<CartPage> {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        _fetchCartItems(); // Refresh data
+        // Berhasil, tidak perlu fetchCartItems ulang supaya tidak berkedip
       } else {
         throw Exception(response.data['message'] ?? 'Gagal mengubah kuantitas');
       }
     } catch (e) {
       debugPrint("Error updating quantity: $e");
+      // Jika gagal di server, kembalikan angkanya ke awal
+      setState(() {
+        final index = _cartItems.indexWhere((item) => item['id'] == cartItemId);
+        if (index != -1) {
+          _cartItems[index]['quantity'] = currentQuantity;
+        }
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Gagal mengubah kuantitas')),
@@ -92,7 +115,16 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
-  Future<void> _deleteItem(int cartItemId) async {
+  Future<void> _deleteItem(String cartItemId) async {
+    // Simpan data lama untuk dikembalikan kalau gagal
+    final originalItems = List.from(_cartItems);
+    
+    // Optimistic UI Update (langsung hapus dari layar)
+    setState(() {
+      _cartItems.removeWhere((item) => item['id'] == cartItemId);
+      _selectedItemIds.remove(cartItemId);
+    });
+
     try {
       final token = await _getToken();
       final response = await _dio.delete(
@@ -103,15 +135,16 @@ class _CartPageState extends State<CartPage> {
       );
 
       if (response.statusCode == 200 && response.data['success'] == true) {
-        setState(() {
-          _selectedItemIds.remove(cartItemId);
-        });
-        _fetchCartItems(); // Refresh data
+        // Berhasil dihapus, tidak perlu refresh ulang
       } else {
         throw Exception(response.data['message'] ?? 'Gagal menghapus produk');
       }
     } catch (e) {
       debugPrint("Error deleting item: $e");
+      // Jika gagal, kembalikan produknya
+      setState(() {
+        _cartItems = originalItems;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Gagal menghapus produk')),
@@ -128,40 +161,32 @@ class _CartPageState extends State<CartPage> {
       return;
     }
 
-    // TODO: Sesuaikan dengan endpoint checkout Anda
-    try {
-      final token = await _getToken();
-      final response = await _dio.post(
-        '${ApiConstants.baseUrl}/checkout',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-        data: {
-          'cartItemIds': _selectedItemIds.toList(),
-        },
-      );
-
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response.data['message'] ?? 'Checkout berhasil!')),
-          );
-        }
-        setState(() {
-          _selectedItemIds.clear();
+    final List<Map<String, dynamic>> checkoutItems = [];
+    for (var item in _cartItems) {
+      if (_selectedItemIds.contains(item['id'])) {
+        final variant = item['variant'] ?? {};
+        final product = variant['product'] ?? {};
+        
+        checkoutItems.add({
+          'cartItemId': item['id'],
+          'id': item['variantId'], // variantId needed for checkout
+          'name': '${product['name']} - ${variant['name']}',
+          'price': product['price'],
+          'imageUrl': product['imageUrl'],
+          'quantity': item['quantity'],
         });
-        _fetchCartItems(); // Refresh keranjang setelah checkout
-      } else {
-        throw Exception(response.data['message'] ?? 'Checkout gagal');
-      }
-    } catch (e) {
-      debugPrint("Error checkout: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Checkout gagal. Silakan coba lagi.')),
-        );
       }
     }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutPage(
+          checkoutItems: checkoutItems,
+          isDirectCheckout: false,
+        ),
+      ),
+    );
   }
 
   String _getImageUrl(String? filename) {
@@ -174,7 +199,8 @@ class _CartPageState extends State<CartPage> {
     double total = 0;
     for (var item in _cartItems) {
       if (_selectedItemIds.contains(item['id'])) {
-        final price = double.tryParse(item['product']['price'].toString()) ?? 0.0;
+        final product = item['variant']?['product'] ?? {};
+        final price = double.tryParse(product['price'].toString()) ?? 0.0;
         final quantity = item['quantity'] as int? ?? 1;
         total += (price * quantity);
       }
@@ -190,14 +216,14 @@ class _CartPageState extends State<CartPage> {
   void _toggleSelectAll(bool? value) {
     setState(() {
       if (value == true) {
-        _selectedItemIds = _cartItems.map<int>((item) => item['id'] as int).toSet();
+        _selectedItemIds = _cartItems.map<String>((item) => item['id'].toString()).toSet();
       } else {
         _selectedItemIds.clear();
       }
     });
   }
 
-  void _toggleSelectItem(int cartItemId, bool? value) {
+  void _toggleSelectItem(String cartItemId, bool? value) {
     setState(() {
       if (value == true) {
         _selectedItemIds.add(cartItemId);
@@ -242,7 +268,8 @@ class _CartPageState extends State<CartPage> {
                             itemBuilder: (context, index) {
                               final cartItem = _cartItems[index];
                               final cartItemId = cartItem['id'];
-                              final product = cartItem['product'] ?? {};
+                              final variant = cartItem['variant'] ?? {};
+                              final product = variant['product'] ?? {};
                               final quantity = cartItem['quantity'] ?? 1;
                               final imageUrl = _getImageUrl(product['imageUrl']);
                               final isSelected = _selectedItemIds.contains(cartItemId);
@@ -284,7 +311,7 @@ class _CartPageState extends State<CartPage> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              product['name'] ?? 'No Name',
+                                              '${product['name'] ?? 'No Name'} - ${variant['name'] ?? ''}',
                                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,

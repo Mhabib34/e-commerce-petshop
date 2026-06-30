@@ -55,7 +55,8 @@ class _RegisterPageState extends State<RegisterPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Registration successful!')),
             );
-            // TODO: Navigate to Login Page here
+            // Kembali ke halaman Login
+            Navigator.pop(context);
           }
         }
       } on DioException catch (e) {
