@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'core/constants/api_constants.dart';
+import 'product_detail_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -192,8 +193,14 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 child: InkWell(
                                   onTap: () {
-                                    // TODO: Navigasi ke Detail Produk passing productId
-                                    debugPrint('Klik produk: ${product['name']}');
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ProductDetailPage(
+                                          product: product,
+                                        ),
+                                      ),
+                                    );
                                   },
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
