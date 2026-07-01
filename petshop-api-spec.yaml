@@ -154,6 +154,12 @@ components:
         createdAt:
           type: string
           format: date-time
+        _count:
+          type: object
+          properties:
+            products:
+              type: integer
+              example: 5
 
     CategoryRequest:
       type: object
@@ -433,31 +439,34 @@ components:
     DashboardStats:
       type: object
       properties:
-        totalOrders:
-          type: integer
-          example: 120
-        totalRevenue:
-          type: number
-          format: float
-          example: 18000000
-        totalProducts:
-          type: integer
-          example: 45
-        totalCustomers:
-          type: integer
-          example: 80
-        ordersByStatus:
+        stats:
           type: object
           properties:
-            PENDING:
+            totalOrders:
               type: integer
-              example: 20
-            DIPROSES:
+              example: 120
+            totalRevenue:
+              type: number
+              format: float
+              example: 18000000
+            totalProducts:
               type: integer
-              example: 35
-            SELESAI:
+              example: 45
+            totalCustomers:
               type: integer
-              example: 65
+              example: 80
+            ordersByStatus:
+              type: object
+              properties:
+                PENDING:
+                  type: integer
+                  example: 20
+                DIPROSES:
+                  type: integer
+                  example: 35
+                SELESAI:
+                  type: integer
+                  example: 65
         revenueChart:
           type: array
           description: Data grafik revenue 7 hari terakhir
@@ -475,6 +484,11 @@ components:
               orderCount:
                 type: integer
                 example: 10
+        recentOrders:
+          type: array
+          description: List 5 pesanan terbaru
+          items:
+            $ref: '#/components/schemas/Order'
 
   # ─────────────────────────────────────────
   # REUSABLE RESPONSES

@@ -26,6 +26,7 @@ export type ProductListItem = {
   stock: number;
   imageUrl: string | null;
   category: Category;
+  variants: ProductVariant[];
 };
 
 export type PaginationMeta = {
