@@ -3,6 +3,9 @@ export type Category = {
   name: string;
   slug: string;
   createdAt: string;
+  _count?: {
+    products: number;
+  };
 };
 
 export type CategoryRequest = {

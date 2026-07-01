@@ -4,6 +4,11 @@ import type { CreateCategoryBody, UpdateCategoryBody } from "./category.types.ts
 export const categoryRepository = {
   async findAll() {
     return prisma.category.findMany({
+      include: {
+        _count: {
+          select: { products: true },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
   },

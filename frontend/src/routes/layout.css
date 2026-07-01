@@ -1,2 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
+
+@theme {
+  --color-primary: #8B2E2E;
+  --color-primary-hover: #7A2828;
+  --color-primary-light: #D4634E;
+  --color-petshop-bg: #FFF5EE;
+  --color-petshop-card: #FFFFFF;
+  --color-petshop-accent: #F07B5F;
+  --color-petshop-peach: #FDEBD6;
+  --font-sans: 'Nunito', system-ui, sans-serif;
+}

@@ -21,5 +21,14 @@ export type DashboardStats = {
       name: string;
       email: string;
     };
+    items?: Array<{
+      quantity: number;
+      variant: {
+        name: string;
+        product: {
+          name: string;
+        }
+      }
+    }>;
   }>;
 };
